@@ -4,11 +4,12 @@ const distanceHeader = document.getElementById("distance");
 const coordinateDME = [55.410307, 37.902451];
 const speedCoeff = 1.852;
 const heightCoeff = 0.305;
-let sortedIncrease = true;
 let highlightedTrs = JSON.parse(localStorage.getItem("highlightedTrs") || "{}");
+let sorting = JSON.parse(localStorage.getItem("sorting") || "true");
 
 class Handler {
     dataArray = [];
+
     getDistanceFromLatLonInKm(lat, lon) {
         let R = 6371;
         let dLat = this.deg2rad(lat - coordinateDME[0]);
@@ -27,46 +28,55 @@ class Handler {
     };
 
     getData() {
-            fetch(url)
-                .then(res => res.json())
-                .then(json => {
-                    let data = Object.assign({}, json);
-                    for (let key in data) {
-                        if (Array.isArray(data[key])) {
-                            this.dataArray.push(data[key]);
-                        }
+        fetch(url)
+            .then(res => res.json())
+            .then(json => {
+                let data = Object.assign({}, json);
+                for (let key in data) {
+                    if (Array.isArray(data[key])) {
+                        this.dataArray.push(data[key]);
                     }
-                    this.dataArray.sort((a, b) => {
-                        const aGetDistance = this.getDistanceFromLatLonInKm(a[1], a[2]);
-                        const bGetDistance = this.getDistanceFromLatLonInKm(b[1], b[2]);
-                        return aGetDistance - bGetDistance;
-                    });
-                    this.render();
-                })
-                .catch(err => console.log(err));
+                }
+
+                this.dataArray.sort((a, b) => {
+                    const aGetDistance = this.getDistanceFromLatLonInKm(a[1], a[2]);
+                    const bGetDistance = this.getDistanceFromLatLonInKm(b[1], b[2]);
+                    if (sorting) {
+                        return aGetDistance - bGetDistance
+                    } else {
+                        return bGetDistance - aGetDistance;
+                    }
+                });
+                this.render();
+            })
+            .catch(err => alert("Данные недоступны, перезагрузите страницу"));
     }
+
     static sortDistance() {
-        let sortedRows = Array.from(tBody.rows);
-        if (!sortedIncrease) {
-            sortedIncrease = true;
+        let sortedRows = [...tBody.rows];
+        if (!sorting) {
+            sorting = true;
+            localStorage.setItem("sorting", JSON.stringify(sorting));
             sortedRows.slice(1);
             sortedRows.sort((rowA, rowB) => rowA.cells[6].innerHTML - rowB.cells[6].innerHTML);
             tBody.append(...sortedRows);
         } else {
-            sortedIncrease = false;
+            sorting = false;
+            localStorage.setItem("sorting", JSON.stringify(sorting));
             sortedRows.slice(1);
             sortedRows.sort((rowA, rowB) => rowB.cells[6].innerHTML - rowA.cells[6].innerHTML);
             tBody.append(...sortedRows);
         }
     }
+
     static highlight(tr) {
         let selectedTr = tr;
-        let rowIndex = String([...tBody.rows].indexOf(selectedTr));
+        let flight = tr.children[0].innerText;
         let selectedRowCells = [...selectedTr.cells];
         if (selectedTr) {
             selectedRowCells.forEach((elem) => {
                 elem.classList.toggle("highlight");
-                elem.classList.contains("highlight") ? highlightedTrs[rowIndex] = true : highlightedTrs[rowIndex] = false;
+                elem.classList.contains("highlight") ? highlightedTrs[flight] = true : highlightedTrs[flight] = false;
             });
             localStorage.setItem("highlightedTrs", JSON.stringify(highlightedTrs));
         }
@@ -76,6 +86,11 @@ class Handler {
         this.dataArray.forEach((elem, index) => {
             const newTr = document.createElement("tr");
             newTr.className = "tbody__th";
+            if (tBody.children.length - 1 > index) {
+                for (let i = index + 1; i < tBody.children.length; i++) {
+                    tBody.removeChild(tBody.children[i]);
+                }
+            }
             if (tBody.children[index]) {
                 tBody.replaceChild(newTr, tBody.children[index]);
             } else {
@@ -94,16 +109,19 @@ class Handler {
             });
         });
         let indexHighlightedTrs = [];
-        for (let key in highlightedTrs) {
-            if (highlightedTrs[key] === true) {
-                indexHighlightedTrs.push(key);
+        for (let numFlight in highlightedTrs) {
+            if (highlightedTrs[numFlight] === true) {
+                indexHighlightedTrs.push(numFlight);
             }
         }
         indexHighlightedTrs.forEach((index) => {
-            let highlightedFromLS = [...tBody.rows][index];
-            let cellsOfHighlighted = [...highlightedFromLS.cells];
-            cellsOfHighlighted.forEach((elem) => {
-                elem.classList.add("highlight");
+            [...tBody.rows].forEach((elem) => {
+                if (elem.children[0].innerText === index) {
+                    let cellsOfHighlighted = [...elem.cells];
+                    cellsOfHighlighted.forEach((td) => {
+                    td.classList.add("highlight");
+                    })
+                }
             })
         });
     };
@@ -116,12 +134,14 @@ tBody.onclick = function (event) {
     if (!tr && !tBody.contains(tr)) return;
     Handler.highlight(tr);
 };
+
 function getTable() {
-        let handler = new Handler();
-        handler.getData();
+    let handler = new Handler();
+    handler.getData();
 }
-setInterval(() => {
+setTimeout(function requestInfo() {
     getTable();
-}, 3000);
+    setTimeout(requestInfo, 3000);
+}, 0);
 
 
