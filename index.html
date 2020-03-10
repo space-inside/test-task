@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Табло</title>
+        <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="content">
+    <h3 class="content__title">Самолеты, находящиеся вблизи аэропорта Домодедово:</h3>
+    <table class="content__table">
+        <thead>
+        <tr>
+            <th class="thread__th">Номер рейса</th>
+            <th class="thread__th">Коодинаты самолета</th>
+            <th class="thread__th">Скорость (км/ч)</th>
+            <th class="thread__th">Курс (градусы)</th>
+            <th class="thread__th">Высота полета (м)</th>
+            <th class="thread__th">Коды аэропортов вылета и назначения</th>
+            <th class="thread__th" id="distance">Дальность до аэропорта Домодедово (м)</th>
+        </tr>
+        </thead>
+        <tbody class="content__table_body tbody"></tbody>
+    </table>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
